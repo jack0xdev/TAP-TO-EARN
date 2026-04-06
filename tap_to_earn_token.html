@@ -1,0 +1,228 @@
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-sans); }
+  #app { min-height: 100vh; background: #0a0a0f; color: #f0eeff; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+  .blob { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.15; pointer-events: none; }
+  .blob1 { width: 300px; height: 300px; background: #7c3aed; top: -80px; left: -80px; }
+  .blob2 { width: 200px; height: 200px; background: #db2777; bottom: -60px; right: -60px; }
+  .header { width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .level-badge { background: rgba(124,58,237,0.2); border: 1px solid rgba(124,58,237,0.4); border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 500; color: #a78bfa; }
+  .streak { font-size: 13px; color: #6b6b80; }
+  .token-card { background: #13131a; border: 1px solid rgba(124,58,237,0.2); border-radius: 24px; padding: 24px; width: 100%; max-width: 400px; text-align: center; margin-bottom: 16px; }
+  .token-amount { font-size: 42px; font-weight: 800; background: linear-gradient(135deg, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+  .token-label { font-size: 13px; color: #6b6b80; margin-top: 4px; }
+  .progress-bar { background: rgba(255,255,255,0.08); border-radius: 10px; height: 8px; margin: 16px 0 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #a855f7); border-radius: 10px; transition: width 0.3s ease; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #6b6b80; }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; max-width: 400px; margin-bottom: 16px; }
+  .stat-card { background: #13131a; border: 1px solid rgba(124,58,237,0.15); border-radius: 16px; padding: 12px 8px; text-align: center; }
+  .stat-num { font-size: 18px; font-weight: 700; color: #a855f7; }
+  .stat-lbl { font-size: 11px; color: #6b6b80; margin-top: 2px; }
+  .tap-area { position: relative; margin: 10px 0 20px; }
+  .tap-btn { width: 160px; height: 160px; border-radius: 50%; border: none; background: linear-gradient(135deg, #7c3aed, #a855f7); cursor: pointer; font-size: 60px; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; box-shadow: 0 0 40px rgba(124,58,237,0.4); position: relative; overflow: hidden; }
+  .tap-btn:active { transform: scale(0.92); }
+  .tap-btn.boosted { background: linear-gradient(135deg, #db2777, #f472b6); box-shadow: 0 0 40px rgba(219,39,119,0.4); }
+  .tap-hint { font-size: 12px; color: #6b6b80; margin-top: 10px; }
+  .float-text { position: fixed; font-size: 18px; font-weight: 700; color: #a855f7; pointer-events: none; animation: floatUp 0.8s ease forwards; z-index: 999; }
+  .float-text.bonus { color: #ec4899; font-size: 22px; }
+  @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
+  .section-title { font-size: 13px; font-weight: 500; color: #6b6b80; text-transform: uppercase; letter-spacing: 1px; width: 100%; max-width: 400px; margin-bottom: 10px; }
+  .boost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 400px; margin-bottom: 20px; }
+  .boost-card { background: #13131a; border: 1px solid rgba(124,58,237,0.2); border-radius: 16px; padding: 14px; cursor: pointer; transition: border-color 0.2s; }
+  .boost-card:hover { border-color: rgba(124,58,237,0.5); }
+  .boost-card.active { border-color: #a855f7; background: rgba(124,58,237,0.1); }
+  .boost-card.locked { opacity: 0.5; cursor: not-allowed; }
+  .boost-name { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .boost-desc { font-size: 12px; color: #6b6b80; margin-bottom: 8px; }
+  .boost-cost { font-size: 12px; color: #a855f7; font-weight: 500; }
+  .ref-card { background: #13131a; border: 1px solid rgba(124,58,237,0.2); border-radius: 16px; padding: 16px; width: 100%; max-width: 400px; margin-bottom: 20px; }
+  .ref-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+  .ref-desc { font-size: 13px; color: #6b6b80; margin-bottom: 14px; }
+  .ref-link { background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #a78bfa; font-family: monospace; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .copy-btn { background: rgba(124,58,237,0.3); border: none; border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #a78bfa; cursor: pointer; }
+  .ref-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ref-stat { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px; text-align: center; }
+  .ref-stat-num { font-size: 20px; font-weight: 700; color: #a855f7; }
+  .ref-stat-lbl { font-size: 11px; color: #6b6b80; }
+  .leaderboard { background: #13131a; border: 1px solid rgba(124,58,237,0.2); border-radius: 16px; padding: 16px; width: 100%; max-width: 400px; margin-bottom: 30px; }
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { width: 24px; font-size: 13px; color: #6b6b80; text-align: center; }
+  .lb-rank.top { color: #f59e0b; font-weight: 700; }
+  .lb-name { flex: 1; font-size: 14px; }
+  .lb-tokens { font-size: 13px; color: #a855f7; font-weight: 500; }
+  .energy-bar { background: rgba(255,255,255,0.08); border-radius: 10px; height: 6px; margin: 12px 0 4px; overflow: hidden; }
+  .energy-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #ef4444); border-radius: 10px; transition: width 0.2s; }
+  .energy-label { display: flex; justify-content: space-between; font-size: 11px; color: #6b6b80; }
+</style>
+
+<div id="app">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+
+  <div class="header">
+    <div class="level-badge" id="levelBadge">Level 1</div>
+    <div class="streak" id="streakEl">Streak: 0 days</div>
+  </div>
+
+  <div class="token-card">
+    <div class="token-amount" id="tokenDisplay">0</div>
+    <div class="token-label">JACK TOKENS</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label">
+      <span id="xpLabel">XP: 0</span>
+      <span id="nextLevel">Next: 1000 XP</span>
+    </div>
+    <div class="energy-bar"><div class="energy-fill" id="energyFill" style="width:100%"></div></div>
+    <div class="energy-label"><span>Energy</span><span id="energyLabel">100/100</span></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="tapsEl">0</div><div class="stat-lbl">Total Taps</div></div>
+    <div class="stat-card"><div class="stat-num" id="perTapEl">1</div><div class="stat-lbl">Per Tap</div></div>
+    <div class="stat-card"><div class="stat-num" id="refCountEl">0</div><div class="stat-lbl">Referrals</div></div>
+  </div>
+
+  <div class="tap-area">
+    <button class="tap-btn" id="tapBtn" onclick="handleTap(event)">⚡</button>
+    <div class="tap-hint" id="tapHint">Tap to earn tokens!</div>
+  </div>
+
+  <div class="section-title">Upgrades</div>
+  <div class="boost-grid">
+    <div class="boost-card" id="boost1" onclick="buyBoost(1)">
+      <div class="boost-name">Double Tap</div>
+      <div class="boost-desc">2x tokens per tap</div>
+      <div class="boost-cost" id="boost1cost">Cost: 500 tokens</div>
+    </div>
+    <div class="boost-card" id="boost2" onclick="buyBoost(2)">
+      <div class="boost-name">Auto Tap</div>
+      <div class="boost-desc">+1 token/sec auto</div>
+      <div class="boost-cost" id="boost2cost">Cost: 1000 tokens</div>
+    </div>
+    <div class="boost-card" id="boost3" onclick="buyBoost(3)">
+      <div class="boost-name">Mega Tap</div>
+      <div class="boost-desc">5x tokens per tap</div>
+      <div class="boost-cost" id="boost3cost">Cost: 3000 tokens</div>
+    </div>
+    <div class="boost-card" id="boost4" onclick="buyBoost(4)">
+      <div class="boost-name">Energy Max</div>
+      <div class="boost-desc">200 max energy</div>
+      <div class="boost-cost" id="boost4cost">Cost: 2000 tokens</div>
+    </div>
+  </div>
+
+  <div class="section-title">Refer & Earn</div>
+  <div class="ref-card">
+    <div class="ref-title">Invite Friends</div>
+    <div class="ref-desc">Each referral = +500 tokens for you & your friend!</div>
+    <div class="ref-link">
+      <span id="refLink">t.me/JackBot?start=ref_jack</span>
+      <button class="copy-btn" onclick="copyRef()">Copy</button>
+    </div>
+    <div class="ref-stats">
+      <div class="ref-stat"><div class="ref-stat-num" id="refEarned">0</div><div class="ref-stat-lbl">Tokens Earned</div></div>
+      <div class="ref-stat"><div class="ref-stat-num" id="refFriends">0</div><div class="ref-stat-lbl">Friends Joined</div></div>
+    </div>
+  </div>
+
+  <div class="section-title">Leaderboard</div>
+  <div class="leaderboard" id="leaderboard"></div>
+</div>
+
+<script>
+let tokens = 0, taps = 0, xp = 0, level = 1, energy = 100, maxEnergy = 100;
+let perTap = 1, autoTap = 0, refCount = 0, refEarned = 0;
+let boosts = { 1: false, 2: false, 3: false, 4: false };
+const levelXP = [0, 1000, 3000, 7000, 15000, 30000, 60000, 100000];
+const leaderData = [
+  { name: "Jack", tokens: 0, isYou: true },
+  { name: "Alex_007", tokens: 48200 },
+  { name: "CryptoKing", tokens: 41500 },
+  { name: "TapMaster", tokens: 38900 },
+  { name: "BitHunter", tokens: 32100 },
+];
+
+function fmt(n) { return n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(1)+'K' : Math.round(n).toString(); }
+
+function handleTap(e) {
+  if (energy <= 0) { document.getElementById('tapHint').textContent = "No energy! Wait to refill..."; return; }
+  const gain = perTap;
+  tokens += gain; taps++; xp += gain; energy = Math.max(0, energy - 1);
+  showFloat(e.clientX, e.clientY, '+' + gain);
+  if (Math.random() < 0.05) { const bonus = perTap * 10; tokens += bonus; showFloat(e.clientX, e.clientY - 30, 'BONUS +' + bonus + '!', true); }
+  updateUI();
+}
+
+function showFloat(x, y, text, bonus = false) {
+  const el = document.createElement('div');
+  el.className = 'float-text' + (bonus ? ' bonus' : '');
+  el.textContent = text;
+  el.style.left = (x - 20) + 'px';
+  el.style.top = (y - 30) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 800);
+}
+
+function buyBoost(id) {
+  if (boosts[id]) return;
+  const costs = { 1: 500, 2: 1000, 3: 3000, 4: 2000 };
+  if (tokens < costs[id]) { alert('Not enough tokens!'); return; }
+  tokens -= costs[id];
+  boosts[id] = true;
+  if (id === 1) perTap = Math.max(perTap, 2);
+  if (id === 2) autoTap += 1;
+  if (id === 3) perTap = Math.max(perTap, 5);
+  if (id === 4) maxEnergy = 200;
+  document.getElementById('boost' + id).classList.add('active');
+  document.getElementById('boost' + id + 'cost').textContent = 'Activated!';
+  updateUI();
+}
+
+function copyRef() {
+  const link = document.getElementById('refLink').textContent;
+  navigator.clipboard.writeText(link).catch(() => {});
+  const btn = document.querySelector('.copy-btn');
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
+  refCount++; refEarned += 500; tokens += 500;
+  document.getElementById('refCountEl').textContent = refCount;
+  document.getElementById('refEarned').textContent = fmt(refEarned);
+  document.getElementById('refFriends').textContent = refCount;
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('tokenDisplay').textContent = fmt(tokens);
+  document.getElementById('tapsEl').textContent = fmt(taps);
+  document.getElementById('perTapEl').textContent = perTap;
+  document.getElementById('energyFill').style.width = Math.round((energy/maxEnergy)*100) + '%';
+  document.getElementById('energyLabel').textContent = Math.round(energy) + '/' + maxEnergy;
+  while (xp >= (levelXP[level] || 999999)) { level++; }
+  document.getElementById('levelBadge').textContent = 'Level ' + level;
+  const curXP = levelXP[level-1] || 0;
+  const nextXP = levelXP[level] || 999999;
+  const pct = Math.min(100, Math.round(((xp - curXP) / (nextXP - curXP)) * 100));
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('xpLabel').textContent = 'XP: ' + fmt(xp);
+  document.getElementById('nextLevel').textContent = 'Next: ' + fmt(nextXP) + ' XP';
+  document.getElementById('tapHint').textContent = energy > 0 ? 'Tap to earn tokens!' : 'Energy recharging...';
+  leaderData[0].tokens = tokens;
+  leaderData.sort((a,b) => b.tokens - a.tokens);
+  const lb = document.getElementById('leaderboard');
+  lb.innerHTML = leaderData.map((p,i) => `
+    <div class="lb-row">
+      <div class="lb-rank ${i<3?'top':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+      <div class="lb-name">${p.name}${p.isYou?' (You)':''}</div>
+      <div class="lb-tokens">${fmt(p.tokens)}</div>
+    </div>`).join('');
+}
+
+setInterval(() => {
+  if (autoTap > 0) { tokens += autoTap; taps++; xp += autoTap; updateUI(); }
+  if (energy < maxEnergy) { energy = Math.min(maxEnergy, energy + 0.5); updateUI(); }
+}, 1000);
+
+updateUI();
+</script>
